@@ -35,15 +35,14 @@
         var lines = data.split('\n');
         var slug = "";
         var dateRegex = /(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}/g;
-        var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.{1}[0-9]{2})|PI)/i;
+        var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.[0-9]{2})|PI)/i;
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
             if (!line || line.length <= 1) {
                 continue;
             }
-            if (i == 0) { // date
+            if (i == 0) { // parse and display
                 var date = line.match(dateRegex)[0];
-                console.log(date);
                 $('a.brand-logo').text("New Releases " + moment(date).format('L'));
                 continue;
             }
@@ -51,11 +50,11 @@
             if (values) {
                 var el = '<li class="collection-item"><span class="badge">$' + (parseFloat(values[3]) ? parseFloat(values[3]) : 0) + '</span> ' + values[2] + '</li>';
                 $('ul').last().append(el);
-            } else if (i > 7) {
-                title = line.trim();
+            } else if (i > 7) { // skip first lines
+                var title = line.trim();
                 slug = slugify(title);
-                tab = '<li class="tab"><a href="#' + slug + '">' + slug + '</a></li>';
-                list = '<div class="row" id="' + slug + '"><a name="' + slug + '"><ul class="collection with-header z-depth-1"></ul></a></div>';
+                var tab = '<li class="tab"><a href="#' + slug + '">' + slug + '</a></li>';
+                var list = '<div class="row" id="' + slug + '"><a name="' + slug + '"><ul class="collection with-header z-depth-1"></ul></a></div>';
                 container.append(list);
                 nav.append(tab);
             }
