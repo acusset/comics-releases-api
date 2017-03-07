@@ -3,24 +3,20 @@
 <head>
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
-    <script type="text/javascript" src="http://underscorejs.org/underscore.js"></script>
-    <script type="text/javascript" src="http://backbonejs.org/backbone.js"></script>
     <script type="text/javascript" src="https://momentjs.com/downloads/moment-with-locales.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
     <meta charset="UTF-8">
-    <title>Backbone Hello World</title>
+    <title>PREVIEWSworld New Releases</title>
 </head>
 <body class="grey lighten-3">
 
-<nav>
-    <div class="nav-wrapper red">
-        <a href="#" class="brand-logo">
-            <div class="container"></div>
+<nav class="nav-extended red" style="margin-bottom: 2%;">
+    <div class="nav-wrapper">
+        <a href="#" class="brand-logo center">
         </a>
-        <ul id="nav-mobile" class="right hide-on-med-and-down">
-            <li><a href="#"></a></li>
-            <li><a href="#"></a></li>
-            <li><a href="#"></a></li>
+    </div>
+    <div class="nav-content">
+        <ul class="tabs tabs-transparent">
         </ul>
     </div>
 </nav>
@@ -33,11 +29,11 @@
 </div>
 
 <script>
-    var json = {};
     var container = $("#container");
+    var nav = $("ul.tabs-transparent");
     $.get('newreleases.txt', function test(data) {
         var lines = data.split('\n');
-        var type = "";
+        var slug = "";
         var dateRegex = /(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}/g;
         var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.{1}[0-9]{2})|PI)/i;
         for (var i = 0; i < lines.length; i++) {
@@ -46,27 +42,22 @@
                 continue;
             }
             if (i == 0) { // date
-                var date = line.match(dateRegex);
-//                date = date[0].split('/');
-//                date = new Moment(date[2], date[0], date[1]);
-                $('a.brand-logo').text("New Releases " + moment(date, "mm/dd/yyyy").format('L'));
+                var date = line.match(dateRegex)[0];
+                console.log(date);
+                $('a.brand-logo').text("New Releases " + moment(date).format('L'));
                 continue;
             }
             var values = line.match(regex);
             if (values) {
-                json[type].push({
-                    id: values[1],
-                    title: values[2],
-                    price: parseFloat(values[3])
-                });
-                var el = '<li class="collection-item"><span class="badge">$' + parseFloat(values[3]) + '</span><span class="title">' + values[2] + '</span></li>';
-                console.log($('ul').last().append(el));
+                var el = '<li class="collection-item"><span class="badge">$' + (parseFloat(values[3]) ? parseFloat(values[3]) : 0) + '</span> ' + values[2] + '</li>';
+                $('ul').last().append(el);
             } else if (i > 7) {
                 title = line.trim();
-                type = slugify(title);
-                json[type] = [];
-                list = '<div class="row" id="' + type + '"><ul class="collection with-header z-depth-1"><li class="collection-header"><h4>' + title + '</h4></li></ul></div>';
+                slug = slugify(title);
+                tab = '<li class="tab"><a href="#' + slug + '">' + slug + '</a></li>';
+                list = '<div class="row" id="' + slug + '"><a name="' + slug + '"><ul class="collection with-header z-depth-1"></ul></a></div>';
                 container.append(list);
+                nav.append(tab);
             }
         }
     });
