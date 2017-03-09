@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+    <script type="text/javascript" src="https://momentjs.com/downloads/moment-with-locales.js"></script>
+    <meta charset="UTF-8">
+    <title>PREVIEWSworld New Releases</title>
+</head>
+
+<body class="grey lighten-3">
+
+<nav class="nav-extended red" style="margin-bottom: 2%;">
+    <div class="nav-wrapper">
+        <a href="#" class="brand-logo center">
+        </a>
+    </div>
+    <div class="nav-content">
+        <ul class="tabs tabs-transparent">
+            <li>hello</li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row col-md-6 col-md-offset-3">
+        <div id="container">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $.getJSON('/api', function test(data) {
+        console.log(data);
+    });
+</script>
+</body>
+</html>
