@@ -3,14 +3,11 @@ var schedule = require('node-schedule');
 var https = require('https');
 var fs = require('fs');
 var path = require('path');
-//noinspection NpmUsedModulesInstalled
 var moment = require('moment');
+var cache = require('memory-cache');
 
 var slug, date;
 var filePath = path.join(__dirname, 'newreleases.txt');
-var jsonPath = path.join(__dirname, 'newreleases.json');
-var menuPath = path.join(__dirname, 'menu.json');
-var index = path.join(__dirname, '/public/index.html');
 
 var dateRegex = /(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}/g;
 var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.[0-9]{2})|PI)/i;
@@ -20,18 +17,21 @@ app.use(express.static('public'));
 
 app.get('/api', function (req, res) {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    res.send(fs.readFileSync(jsonPath, {encoding: 'utf-8', flag: 'r'}));
+    res.send(cache.get('content'));
 });
 
 app.get('/api/menu', function (req, res) {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    res.send(fs.readFileSync(menuPath, {encoding: 'utf-8', flag: 'r'}));
+    res.send(cache.get('menu'));
 });
 
 schedule.scheduleJob('42 3 * * * *', function () {
     getFile();
 });
 
+/**
+ * Get txt file from previewsworld and save it
+ */
 function getFile() {
     var target = 'https://www.previewsworld.com/shipping/newreleases.txt';
     var file = fs.createWriteStream(filePath);
@@ -45,9 +45,12 @@ function getFile() {
     });
 }
 
+/**
+ * Parse newreleases.txt file and create json files
+ */
 function parseFile() {
     fs.readFile(filePath, 'utf-8', function (err, data) {
-        var tmp = {};
+        var content = {};
         var types = [];
         if (err) throw err;
         var lines = data.split('\n');
@@ -56,10 +59,10 @@ function parseFile() {
             if (!line || line.length <= 1) {
                 continue;
             }
-            if (i == 0) { // parse
+            if (i == 0) { // parse date
                 date = line.match(dateRegex)[0];
                 date = moment(Date.parse(date)).format('L'); // to prevent momentjs deprecation warning
-                tmp['date'] = date;
+                content['date'] = date;
                 continue;
             }
             var values = line.match(regex);
@@ -69,7 +72,7 @@ function parseFile() {
                     title: values[2],
                     price: parseFloat(values[3])
                 };
-                tmp[slug].push(obj);
+                content[slug].push(obj);
             } else if (i > 7) { // skip first lines
                 var title = line.trim();
                 slug = slugify(title);
@@ -78,14 +81,11 @@ function parseFile() {
                     slug: slug
                 };
                 types.push(type);
-                tmp[slug] = [];
+                content[slug] = [];
             }
         }
-        tmp = JSON.stringify(tmp);
-        types = JSON.stringify(types);
-        console.log(types);
-        fs.writeFileSync(jsonPath, tmp, 'utf8');
-        fs.writeFileSync(menuPath, types, 'utf8');
+        cache.put('menu',JSON.stringify(types));
+        cache.put('content',JSON.stringify(content));
     });
 }
 
@@ -98,7 +98,7 @@ function slugify(text) {
         .replace(/-+$/, '');            // Trim - from end of text
 }
 
-app.listen(3000, function () {
-    console.log('Listening on port 3000!');
+app.listen(26100, function () {
+    console.log('Listening on port 26100!');
     getFile();
 });

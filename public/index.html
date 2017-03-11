@@ -7,11 +7,11 @@
     <title>PREVIEWSworld New Releases</title>
 </head>
 
-<body class="grey lighten-3">
+<body class="black lighten-4">
 
-<nav class="nav-extended" style="margin-bottom: 2%">
+<nav class="nav-extended red accent-4" style="margin-bottom: 2%">
     <div class="nav-wrapper">
-        <a href="#" class="brand-logo center">Logo</a>
+        <a href="#" class="brand-logo center"></a>
         <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
         </ul>
@@ -27,27 +27,59 @@
 <div class="container">
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
 <script type="text/javascript" src="https://momentjs.com/downloads/moment-with-locales.js"></script>
 <script>
+    hostname = window.location.hostname;
+    if (hostname.match(/(nine-baguettes.fr)/g) || hostname.match(/(localhost)/g)) {
+        apiPath = '';
+    } else {
+        apiPath = 'http://comics.nine-baguettes.fr';
+    }
+
     menu = $('ul.tabs');
     container = $('div.container');
-    $.getJSON('/api/menu', function test(tabs) {
+    logo = $('a.brand-logo');
+
+    var menuItems;
+    $.getJSON(apiPath + '/api/menu', function test(tabs) {
+        menuItems = tabs;
+        var tab;
         for (var i = 0; i < tabs.length; i++) {
             if (i == 0) {
                 tab = '<li class="tab"><a href="#' + tabs[i].slug + '" class="active">' + tabs[i].name + '</a></li>'
             } else {
                 tab = '<li class="tab"><a href="#' + tabs[i].slug + '">' + tabs[i].name + '</a></li>'
             }
-            div = '<div id="' + tabs[i].slug + '" class="col s12"></div>'
+            var div = '<div id="' + tabs[i].slug + '" class="col s12"></div>'
             menu.append(tab);
             container.append(div);
         }
     });
 
-    $.getJSON('/api', function test(data) {
+    $.getJSON(apiPath + '/api', function test(data) {
 
+        date = data.date;
+        logo.text('New releases ' + date);
+        keys = Object.keys(data);
+        keys.shift();
+
+        for (var i = 0; i < keys.length; i++) {
+
+            var comics = data[keys[i]];
+            var div = $('#' + keys[i]);
+            div.append('<ul class="collection"></ul>');
+
+            for (var j = 0; j < comics.length; j++) {
+
+                var title = data[keys[i]][j].title;
+                var price = data[keys[i]][j].price;
+                var el = '<li class="collection-item"><span class="new badge red accent-4" data-badge-caption="$">' + price + '</span>' + title + '</li>';
+                div.children().append(el);
+
+            }
+        }
     });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
 </body>
 </html>
