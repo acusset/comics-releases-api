@@ -19,7 +19,8 @@
   "dependencies": {
     "express": "latest",
     "moment": "^2.17.1",
-    "node-schedule": "latest"
+    "node-schedule": "latest",
+    "nodemon": "^1.11.0"
   },
   "devDependencies": {
     "memory-cache": "latest"

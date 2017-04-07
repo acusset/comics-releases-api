@@ -13,7 +13,6 @@ var dateRegex = /(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}/g;
 var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.[0-9]{2})|PI)/i;
 
 var app = express();
-app.use(express.static('public'));
 
 app.get('/api', function (req, res) {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
