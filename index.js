@@ -1,103 +1,102 @@
-var express = require('express');
-var schedule = require('node-schedule');
-var https = require('https');
-var fs = require('fs');
-var path = require('path');
-var moment = require('moment');
-var cache = require('memory-cache');
+const express = require('express');
+const app = express();
+const schedule = require('node-schedule');
+const https = require('https');
+const moment = require('moment');
 
-var slug, date;
-var filePath = path.join(__dirname, 'newreleases.txt');
+let wednesday = moment().day(3).format('L'); // this wednesday
+const target = `https://www.previewsworld.com/NewReleases/Export?format=csv&releaseDate=${wednesday}`;
+let content, jsonContent;
 
-var dateRegex = /(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}/g;
-var regex = /(^[A-Z]{3}[0-9]{6})\s(.+)\s\$(([0-9]+\.[0-9]{2})|PI)/i;
-
-var app = express();
-
-app.get('/api', function (req, res) {
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    res.send(cache.get('content'));
-});
-
-app.get('/api/menu', function (req, res) {
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    res.send(cache.get('menu'));
-});
+(function task() {
+    getFile(target)
+        .then(parseFile)
+        .then(cacheFile)
+        .catch((err) => {
+            console.log(err);
+        });
+})();
 
 schedule.scheduleJob('42 3 * * * *', function () {
-    getFile();
+    console.log('Begining task at ' . moment().format());
+    wednesday = moment().day(3).format('L');
+    task();
+    console.log('Task finished at ' . moment().format());
 });
 
-/**
- * Get txt file from previewsworld and save it
- */
-function getFile() {
-    var target = 'https://www.previewsworld.com/shipping/newreleases.txt';
-    var file = fs.createWriteStream(filePath);
-    https.get(target, function (response) {
-        if (response.statusCode === 200) {
-            response.pipe(file);
-            file.on('finish', function () {
-                parseFile();
+function getFile(url) {
+    console.log(`Getting file : ${url}`);
+    return new Promise((resolve, reject) => {
+        let file = [];
+        https.get(url, (res) => {
+            if (res.statusCode !== 200) {
+                reject(res.statusCode);
+            }
+            res.on('data', (chunk) => {
+                file.push(chunk);
+            }).on('end', () => {
+                console.log('File downloaded');
+                resolve(file.join(''));
+            })
+        }).on('error', () => {
+            reject('request.error');
+        });
+    });
+}
+
+function parseFile(data) {
+    return new Promise((resolve) => {
+        let lines = data.split('\n');
+        let price;
+
+        lines = lines
+            .map((line) => {
+                return line.trim().replace(/\r?\n|\r/, '');
+            })
+            .filter((line, index) => {
+                return line.length > 0 && index > 6;
             });
+
+        let line, current;
+        for (let i = 0; i < lines.length; i++) {
+            line = lines[i].split(',');
+            if (line.length === 1) {
+                current = line[0];
+                lines.splice(i, 1);
+                i--;
+                continue;
+            }
+            line.push(current);
+            lines[i] = line;
         }
+
+        lines = lines.map((line) => {
+            price = line[2] === '$PI' ? 0.0 : parseFloat(line[2].replace(/\$/g, ''));
+            return {
+                id: line[0],
+                name: line[1],
+                price: price,
+                type: line[3],
+            }
+        });
+
+        console.log('File parsed');
+        resolve(lines);
     });
 }
 
-/**
- * Parse newreleases.txt file and create json files
- */
-function parseFile() {
-    fs.readFile(filePath, 'utf-8', function (err, data) {
-        var content = {};
-        var types = [];
-        if (err) throw err;
-        var lines = data.split('\n');
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            if (!line || line.length <= 1) {
-                continue;
-            }
-            if (i == 0) { // parse date
-                date = line.match(dateRegex)[0];
-                date = moment(Date.parse(date)).format('L'); // to prevent momentjs deprecation warning
-                content['date'] = date;
-                continue;
-            }
-            var values = line.match(regex);
-            if (values) {
-                var obj = {
-                    id: values[1],
-                    title: values[2],
-                    price: parseFloat(values[3])
-                };
-                content[slug].push(obj);
-            } else if (i > 7) { // skip first lines
-                var title = line.trim();
-                slug = slugify(title);
-                var type = {
-                    name: title,
-                    slug: slug
-                };
-                types.push(type);
-                content[slug] = [];
-            }
-        }
-        cache.put('menu',JSON.stringify(types));
-        cache.put('content',JSON.stringify(content));
-    });
+function cacheFile(data) {
+    content = data;
+    jsonContent = JSON.stringify(data);
+    console.log('File cached');
 }
 
-function slugify(text) {
-    return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')           // Replace spaces with -
-        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-        .replace(/^-+/, '')             // Trim - from start of text
-        .replace(/-+$/, '');            // Trim - from end of text
-}
+app.get('', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(jsonContent);
+});
 
-app.listen(26100, function () {
-    console.log('Listening on port 26100!');
-    getFile();
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`App listening on port ${port}`)
 });
