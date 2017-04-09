@@ -8,20 +8,23 @@ let wednesday = moment().day(3).format('L'); // this wednesday
 const target = `https://www.previewsworld.com/NewReleases/Export?format=csv&releaseDate=${wednesday}`;
 let content, jsonContent;
 
-(function task() {
+function task() {
     getFile(target)
         .then(parseFile)
         .then(cacheFile)
         .catch((err) => {
             console.log(err);
         });
-})();
+}
+
+task();
+
 
 schedule.scheduleJob('42 3 * * * *', function () {
-    console.log('Begining task at ' . moment().format());
+    console.log('Begining task at ' + moment().format());
     wednesday = moment().day(3).format('L');
     task();
-    console.log('Task finished at ' . moment().format());
+    console.log('Task finished at ' + moment().format());
 });
 
 function getFile(url) {
