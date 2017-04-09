@@ -9,5 +9,4 @@ Sample available at : https://www.previewsworld.com/NewReleases/Export?format=tx
  3. Display in a proper way the comics
  
  Stack :
-  * Node.js (back)
-  * Materialiaze.css (front)
+  * Node & ExpressJS (back)
