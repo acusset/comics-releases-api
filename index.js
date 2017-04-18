@@ -19,7 +19,6 @@ function task() {
 
 task();
 
-
 schedule.scheduleJob('42 3 * * * *', function () {
     console.log('Begining task at ' + moment().format());
     wednesday = moment().day(3).format('L');
@@ -96,6 +95,7 @@ function cacheFile(data) {
 
 app.get('', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(jsonContent);
 });
 
